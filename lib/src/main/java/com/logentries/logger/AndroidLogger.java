@@ -6,23 +6,32 @@ import java.io.IOException;
 
 public class AndroidLogger {
 
+    private static boolean useHttpPost = false;
+    private static boolean useSsl = false;
+    private static boolean isUsingDataHub = false;
+    private static String dataHubAddr = null;
+    private static int dataHubPort = 0;
+    private static boolean logHostName = false;
+    private static boolean sendRawLogMessage = false;
+
     private static AndroidLogger instance;
 
     private AsyncLoggingWorker loggingWorker;
 
-    private AndroidLogger(Context context, boolean useHttpPost, boolean useSsl, boolean isUsingDataHub, String dataHubAddr, int dataHubPort,
-                          String token, boolean logHostName) throws IOException {
-        loggingWorker = new AsyncLoggingWorker(context, useSsl, useHttpPost, isUsingDataHub, token, dataHubAddr, dataHubPort, logHostName);
+    public static void setUseSsl(boolean ssl) {
+        useSsl = ssl;
     }
 
-    public static synchronized AndroidLogger createInstance(Context context, boolean useHttpPost, boolean useSsl, boolean isUsingDataHub,
-                                                            String dataHubAddr, int dataHubPort, String token, boolean logHostName)
-            throws IOException {
+    public static void setSendRawLogMessage(boolean rawLogMessage) {
+        sendRawLogMessage = rawLogMessage;
+    }
+
+    public static synchronized AndroidLogger createInstance(Context context, String token) throws IOException {
         if (instance != null) {
             instance.loggingWorker.close();
         }
 
-        instance = new AndroidLogger(context, useHttpPost, useSsl, isUsingDataHub, dataHubAddr, dataHubPort, token, logHostName);
+        instance = new AndroidLogger(context, token);
         return instance;
     }
 
@@ -34,20 +43,8 @@ public class AndroidLogger {
         }
     }
 
-    /**
-     *  Set whether you wish to send your log message without additional meta data to Logentries.
-     * @param sendRawLogMessage Set to true if you wish to send raw log messages
-     */
-    public void setSendRawLogMessage(boolean sendRawLogMessage){
-        loggingWorker.setSendRawLogMessage(sendRawLogMessage);
-    }
-
-    /**
-     *  Returns whether the logger is configured to send raw log messages or not.
-     * @return
-     */
-    public boolean getSendRawLogMessage(){
-        return loggingWorker.getSendRawLogMessage();
+    private AndroidLogger(Context context, String token) throws IOException {
+        loggingWorker = new AsyncLoggingWorker(context, useSsl, useHttpPost, isUsingDataHub, token, dataHubAddr, dataHubPort, logHostName, sendRawLogMessage);
     }
 
     public void log(String message) {

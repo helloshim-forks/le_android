@@ -50,11 +50,6 @@ public class AsyncLoggingWorker {
     private boolean started = false;
 
     /**
-     * Whether should send logs with or without meta data
-     */
-    private boolean sendRawLogMessage = false;
-
-    /**
      * Asynchronous socket appender.
      */
     private SocketAppender appender;
@@ -69,8 +64,7 @@ public class AsyncLoggingWorker {
      */
     private LogStorage localStorage;
 
-    public AsyncLoggingWorker(Context context, boolean useSsl, boolean useHttpPost, boolean useDataHub, String logToken,
-                              String dataHubAddress, int dataHubPort, boolean logHostName) throws IOException {
+    public AsyncLoggingWorker(Context context, boolean useSsl, boolean useHttpPost, boolean useDataHub, String logToken, String dataHubAddress, int dataHubPort, boolean logHostName, boolean sendRawLogMessage) throws IOException {
 
         if (!checkTokenFormat(logToken)) {
             throw new IllegalArgumentException(INVALID_TOKEN);
@@ -78,30 +72,9 @@ public class AsyncLoggingWorker {
 
         queue = new ArrayBlockingQueue<String>(QUEUE_SIZE);
         localStorage = new LogStorage(context);
-        appender = new SocketAppender(useHttpPost, useSsl, useDataHub, dataHubAddress, dataHubPort, logToken, logHostName, this.sendRawLogMessage);
+        appender = new SocketAppender(useHttpPost, useSsl, useDataHub, dataHubAddress, dataHubPort, logToken, logHostName, sendRawLogMessage);
         appender.start();
         started = true;
-    }
-
-    public AsyncLoggingWorker(Context context, boolean useSsl, boolean useHttpPost, String logToken) throws IOException {
-        this(context, useSsl, useHttpPost, false, logToken, null, 0, true);
-    }
-
-    public AsyncLoggingWorker(Context context, boolean useSsl, String logToken) throws IOException {
-        this(context, useSsl, false, false, logToken, null, 0, true);
-    }
-
-    public AsyncLoggingWorker(Context context, boolean useSsl, String logToken, String dataHubAddr, int dataHubPort)
-            throws IOException {
-        this(context, useSsl, false, true, logToken, dataHubAddr, dataHubPort, true);
-    }
-
-    public void setSendRawLogMessage(boolean sendRawLogMessage){
-        this.sendRawLogMessage = sendRawLogMessage;
-    }
-
-    public boolean getSendRawLogMessage(){
-        return sendRawLogMessage;
     }
 
     public void addLineToQueue(String line) {
