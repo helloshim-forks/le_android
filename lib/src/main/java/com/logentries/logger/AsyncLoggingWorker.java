@@ -227,6 +227,14 @@ public class AsyncLoggingWorker {
             }
         }
 
+        private void writeMessage(String msg) throws IOException {
+            if (sendRawLogMessage){
+                leClient.write(msg.replace("\n", LINE_SEP_REPLACER));
+            } else{
+                leClient.write(Utils.formatMessage(msg.replace("\n", LINE_SEP_REPLACER),logHostName, useHttpPost));
+            }
+        }
+
         private boolean tryUploadSavedLogs() {
             Queue<String> logs = new ArrayDeque<String>();
 
@@ -234,11 +242,7 @@ public class AsyncLoggingWorker {
 
                 logs = localStorage.getAllLogsFromStorage(false);
                 for (String msg = logs.peek(); msg != null; msg = logs.peek()) {
-                    if(sendRawLogMessage){
-                        leClient.write(Utils.formatMessage(msg.replace("\n", LINE_SEP_REPLACER),logHostName, useHttpPost));
-                    }else{
-                        leClient.write(msg.replace("\n", LINE_SEP_REPLACER));
-                    }
+                    writeMessage(msg);
                     logs.poll(); // Remove the message after successful sending.
                 }
 
@@ -315,8 +319,7 @@ public class AsyncLoggingWorker {
                             }
 
                             if (message != null) {
-                                this.leClient.write(Utils.formatMessage(message.replace("\n", LINE_SEP_REPLACER),
-                                        logHostName, useHttpPost));
+                                writeMessage(message);
                                 message = null;
                             }
 
